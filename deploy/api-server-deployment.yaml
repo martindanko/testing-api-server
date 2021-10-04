@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: what3words-api-server
+  name: what3words-api-server
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: what3words-api-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: what3words-api-server
+    spec:
+      containers:
+      - env:
+        - name: ELASTIC_APM_AGENT
+          value: elastic-apm-agent-1.18.0.jar
+        - name: ELASTIC_APM_ENABLED
+          value: "false"
+        - name: ELASTIC_APM_SERVICE_NAME
+          value: what3words-api-server
+        - name: ELASTIC_APM_SERVER_URL
+          value: https://970c5c8b423a4470965ef9e9bfb79dab.apm.eu-west-2.aws.cloud.es.io:443
+        - name: ELASTIC_APM_SECRET_TOKEN
+          value: 9FxiOpcQU23fuP29Se
+        - name: ELASTIC_APM_SERVICE_VERSION
+          value: v3.2.1
+        - name: ELASTIC_APM_ENVIRONMENT
+          value: sandbox.london
+        image: 648460439850.dkr.ecr.eu-west-2.amazonaws.com/what3words-api-server:latest # {"$imagepolicy": "flux-system:what3words-api-server"}
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v2/forward?addr=index.home.raft&lang=en&key=TSTSTSTS
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: what3words-api-server
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v2/forward?addr=index.home.raft&lang=en&key=TSTSTSTS
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /wrapper.sh
+          name: configuration
+          subPath: wrapper.sh
+        - mountPath: /var/lib/jetty/start.d/custom.ini
+          name: configuration
+          subPath: custom.ini
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: what3words-api-server
+        name: configuration

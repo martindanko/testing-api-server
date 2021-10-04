@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+data:
+  custom.ini: |
+    jetty.httpConfig.requestHeaderSize=65536
+    jetty.httpConfig.responseHeaderSize=65536
+  wrapper.sh: |
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:/opt/${ELASTIC_APM_AGENT}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.enabled=${ELASTIC_APM_ENABLED}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.service_name=${ELASTIC_APM_SERVICE_NAME}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.service_version=${ELASTIC_APM_SERVICE_VERSION}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.application_packages=com.what3words"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.server_urls=${ELASTIC_APM_SERVER_URL}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.secret_token=${ELASTIC_APM_SECRET_TOKEN}"
+    export JAVA_OPTIONS="${JAVA_OPTIONS} -Delastic.apm.environment=${ELASTIC_APM_ENVIRONMENT}"
+
+    /docker-entrypoint.sh java -jar /usr/local/jetty/start.jar
+kind: ConfigMap
+metadata:
+  name: what3words-api-server
+  namespace: default
+  selfLink: /api/v1/namespaces/default/configmaps/what3words-api-server
